@@ -20,14 +20,12 @@ struct Carta {
 void cadastrarCarta(struct Carta *c, int num) {
     printf("\n=== Cadastro Carta %d ===\n", num);
     
-    // Validação do estado (A-H)
     do {
         printf("Estado (A-H): ");
         scanf(" %c", &c->estado);
         c->estado = toupper(c->estado);
     } while(c->estado < 'A' || c->estado > 'H');
 
-    // Validação do código
     do {
         printf("Código (ex: A01): ");
         scanf("%3s", c->codigo);
@@ -48,9 +46,8 @@ void cadastrarCarta(struct Carta *c, int num) {
     printf("Pontos turísticos: ");
     scanf("%d", &c->pontosTuristicos);
 
-    // Cálculos automáticos
     c->densidadePopulacional = c->populacao / c->area;
-    c->pibPerCapita = (c->pib * 1000) / c->populacao; // em milhões/hab
+    c->pibPerCapita = (c->pib * 1000) / c->populacao;
 }
 
 void exibirCarta(struct Carta c, int num) {
@@ -66,116 +63,94 @@ void exibirCarta(struct Carta c, int num) {
     printf("PIB per capita: %.2f milhões/hab\n", c.pibPerCapita);
 }
 
-void compararAtributo(struct Carta c1, struct Carta c2, int atributo) {
-    bool c1_vence = false;
-    bool empate = false;
-    char *nomeAtributo;
-    
+float obterValorAtributo(struct Carta c, int atributo) {
     switch(atributo) {
-        case 1: // População
-            c1_vence = c1.populacao > c2.populacao;
-            empate = c1.populacao == c2.populacao;
-            nomeAtributo = "População";
-            break;
-            
-        case 2: // Área
-            c1_vence = c1.area > c2.area;
-            empate = c1.area == c2.area;
-            nomeAtributo = "Área";
-            break;
-            
-        case 3: // PIB
-            c1_vence = c1.pib > c2.pib;
-            empate = c1.pib == c2.pib;
-            nomeAtributo = "PIB";
-            break;
-            
-        case 4: // Pontos Turísticos
-            c1_vence = c1.pontosTuristicos > c2.pontosTuristicos;
-            empate = c1.pontosTuristicos == c2.pontosTuristicos;
-            nomeAtributo = "Pontos Turísticos";
-            break;
-            
-        case 5: // Densidade (menor vence)
-            c1_vence = c1.densidadePopulacional < c2.densidadePopulacional;
-            empate = c1.densidadePopulacional == c2.densidadePopulacional;
-            nomeAtributo = "Densidade Populacional";
-            break;
-            
-        case 6: // PIB per capita
-            c1_vence = c1.pibPerCapita > c2.pibPerCapita;
-            empate = c1.pibPerCapita == c2.pibPerCapita;
-            nomeAtributo = "PIB per capita";
-            break;
-            
-        default:
-            printf("Atributo inválido!\n");
-            return;
-    }
-    
-    printf("\n--- Resultado ---\n");
-    printf("Atributo comparado: %s\n", nomeAtributo);
-    
-    if(empate) {
-        printf("Empate entre %s e %s!\n", c1.nomeCidade, c2.nomeCidade);
-    } else if(c1_vence) {
-        printf("Vencedor: %s (%s)\n", c1.nomeCidade, c1.codigo);
-    } else {
-        printf("Vencedor: %s (%s)\n", c2.nomeCidade, c2.codigo);
+        case 1: return (float)c.populacao;
+        case 2: return c.area;
+        case 3: return c.pib;
+        case 4: return (float)c.pontosTuristicos;
+        case 5: return -c.densidadePopulacional; // negativo pq menor é melhor
+        case 6: return c.pibPerCapita;
+        default: return -1;
     }
 }
 
-void menuComparacao(struct Carta c1, struct Carta c2) {
-    int opcao;
-    bool sair = false;
-    
-    while(!sair) {
-        printf("\n=== MENU DE COMPARAÇÃO ===\n");
-        printf("1. Comparar por População\n");
-        printf("2. Comparar por Área\n");
-        printf("3. Comparar por PIB\n");
-        printf("4. Comparar por Pontos Turísticos\n");
-        printf("5. Comparar por Densidade Populacional\n");
-        printf("6. Comparar por PIB per capita\n");
-        printf("0. Sair\n");
-        printf("Escolha uma opção: ");
-        scanf("%d", &opcao);
-        
-        switch(opcao) {
-            case 1:
-            case 2:
-            case 3:
-            case 4:
-            case 5:
-            case 6:
-                compararAtributo(c1, c2, opcao);
-                break;
-                
-            case 0:
-                sair = true;
-                break;
-                
-            default:
-                printf("Opção inválida!\n");
-        }
+char* nomeAtributo(int atributo) {
+    switch(atributo) {
+        case 1: return "População";
+        case 2: return "Área";
+        case 3: return "PIB";
+        case 4: return "Pontos Turísticos";
+        case 5: return "Densidade Populacional (menor vence)";
+        case 6: return "PIB per capita";
+        default: return "Desconhecido";
     }
+}
+
+void compararDoisAtributos(struct Carta c1, struct Carta c2, int a1, int a2) {
+    float valorC1_A1 = obterValorAtributo(c1, a1);
+    float valorC2_A1 = obterValorAtributo(c2, a1);
+    float valorC1_A2 = obterValorAtributo(c1, a2);
+    float valorC2_A2 = obterValorAtributo(c2, a2);
+
+    int pontosC1 = (valorC1_A1 > valorC2_A1 ? 1 : (valorC1_A1 == valorC2_A1 ? 0 : -1))
+                 + (valorC1_A2 > valorC2_A2 ? 1 : (valorC1_A2 == valorC2_A2 ? 0 : -1));
+    
+    printf("\n--- Comparação ---\n");
+    printf("Atributo 1: %s\n", nomeAtributo(a1));
+    printf("Atributo 2: %s\n", nomeAtributo(a2));
+    
+    printf("%s: %.2f / %.2f\n", c1.nomeCidade, valorC1_A1, valorC1_A2);
+    printf("%s: %.2f / %.2f\n", c2.nomeCidade, valorC2_A1, valorC2_A2);
+
+    printf("\nResultado: ");
+    pontosC1 > 0 ? printf("Vencedor: %s (%s)\n", c1.nomeCidade, c1.codigo) :
+    pontosC1 < 0 ? printf("Vencedor: %s (%s)\n", c2.nomeCidade, c2.codigo) :
+                   printf("Empate entre %s e %s!\n", c1.nomeCidade, c2.nomeCidade);
+}
+
+void menuComparacaoAvancada(struct Carta c1, struct Carta c2) {
+    int opcao1, opcao2;
+    char continuar;
+
+    do {
+        printf("\n=== MENU DE COMPARAÇÃO MESTRE ===\n");
+        printf("1. População\n");
+        printf("2. Área\n");
+        printf("3. PIB\n");
+        printf("4. Pontos Turísticos\n");
+        printf("5. Densidade Populacional (menor vence)\n");
+        printf("6. PIB per capita\n");
+
+        do {
+            printf("Escolha o 1º atributo (1 a 6): ");
+            scanf("%d", &opcao1);
+        } while(opcao1 < 1 || opcao1 > 6);
+
+        do {
+            printf("Escolha o 2º atributo (diferente do 1º): ");
+            scanf("%d", &opcao2);
+        } while(opcao2 < 1 || opcao2 > 6 || opcao2 == opcao1);
+
+        compararDoisAtributos(c1, c2, opcao1, opcao2);
+
+        printf("\nDeseja fazer outra comparação? (s/n): ");
+        scanf(" %c", &continuar);
+    } while(tolower(continuar) == 's');
 }
 
 int main() {
     struct Carta cartas[MAX_CARTAS];
-    
-    // Cadastro das cartas
+
     for(int i = 0; i < MAX_CARTAS; i++) {
         cadastrarCarta(&cartas[i], i+1);
     }
-    
-    // Exibição das cartas
+
     for(int i = 0; i < MAX_CARTAS; i++) {
         exibirCarta(cartas[i], i+1);
     }
-    
-    // Menu de comparação
-    menuComparacao(cartas[0], cartas[1]);
-    
+
+    menuComparacaoAvancada(cartas[0], cartas[1]);
+
     return 0;
 }
